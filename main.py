@@ -129,10 +129,11 @@ async def require_api_key(key: str = Depends(api_key_header)):
     if not key or not db_valid(key):
         raise HTTPException(status_code=401, detail="Invalid or missing API key. Pass it as X-API-Key header.")
 
-async def require_admin_key(key: str = Depends(admin_key_header)):
+async def require_admin_key(request: Request):
+    key = request.headers.get("x-admin-key") or request.headers.get("X-Admin-Key")
     if not ADMIN_KEY:
         raise HTTPException(status_code=503, detail="Admin key not configured on this server.")
-    if not key or key != ADMIN_KEY:
+    if not key or key.strip() != ADMIN_KEY.strip():
         raise HTTPException(status_code=401, detail="Invalid or missing admin key. Pass it as X-Admin-Key header.")
 
 # ---------------------------------------------------------------------------
@@ -200,19 +201,22 @@ async def _generate_image(client: httpx.AsyncClient, payload: ImageRequest) -> I
 # Key management
 # ---------------------------------------------------------------------------
 @app.post("/v1/keys/generate")
-async def generate_key(label: str, _: None = Depends(require_admin_key)):
-    key = "img-" + secrets.token_urlsafe(32)
+async def generate_key(request: Request, label: str):
+    await require_admin_key(request)
+    key = "txt-" + secrets.token_urlsafe(32)
     db_add_key(key, label)
     return {"label": label, "api_key": key, "note": "Store securely — cannot be retrieved again."}
 
 @app.get("/v1/keys")
-async def list_keys(_: None = Depends(require_admin_key)):
+async def list_keys(request: Request):
+    await require_admin_key(request)
     keys = db_list()
     for k in keys: k["key"] = k["key"][:8] + "••••••••"
     return {"count": len(keys), "keys": keys}
 
 @app.delete("/v1/keys/revoke")
-async def revoke_key(key: str, _: None = Depends(require_admin_key)):
+async def revoke_key(request: Request, key: str):
+    await require_admin_key(request)
     if not db_revoke(key):
         raise HTTPException(status_code=404, detail="Key not found.")
     return {"revoked": True, "key": key[:8] + "••••••••"}
