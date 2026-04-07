@@ -203,7 +203,7 @@ async def _generate_image(client: httpx.AsyncClient, payload: ImageRequest) -> I
 @app.post("/v1/keys/generate")
 async def generate_key(request: Request, label: str):
     await require_admin_key(request)
-    key = "txt-" + secrets.token_urlsafe(32)
+    key = "img-" + secrets.token_urlsafe(32)
     db_add_key(key, label)
     return {"label": label, "api_key": key, "note": "Store securely — cannot be retrieved again."}
 
