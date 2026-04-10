@@ -459,6 +459,7 @@ async def image_generate(
                          n=payload.n, success=False, request_id=request_id,
                          error_msg=str(exc.detail))
         raise
-        @app.on_event("startup")
+        
+@app.on_event("startup")
 async def startup_event():
     asyncio.create_task(keep_alive.keep_alive())
