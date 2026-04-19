@@ -399,7 +399,7 @@ async def get_usage_by_key(
 # ---------------------------------------------------------------------------
 # Core routes
 # ---------------------------------------------------------------------------
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
     return {"status": "ok", "environment": ENVIRONMENT, "version": APP_VERSION,
             "providers": {"openai": bool(OPENAI_API_KEY)}}
